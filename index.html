@@ -15,9 +15,7 @@
             font-family: 'Courier New', monospace;
             background: radial-gradient(circle at center, #1a1a2e, #16213e, #0f3460);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: block;
             color: white;
             overflow: hidden;
         }
@@ -51,11 +49,13 @@
             border-radius: 25px;
             padding: 30px;
             max-width: 900px;
-            width: calc(95% - 320px);
+            width: 95%;
             box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-            position: relative;
+            position: absolute;
+            top: 50%;
+            left: calc(50% - 150px);
+            transform: translate(-50%, -50%);
             animation: container-pulse 2s infinite;
-            margin-right: 320px;
         }
         @keyframes container-pulse {
             0% { box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
@@ -678,6 +678,50 @@
             background: linear-gradient(45deg, #4ade80, #22c55e);
             box-shadow: 0 5px 15px rgba(74,222,128,0.3);
         }
+        .my-best-score {
+            margin-bottom: 10px;
+        }
+        .my-best-score .my-label {
+            background: #fff;
+            color: #22c55e;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 2px 8px;
+            margin-right: 10px;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .my-best-score .rank {
+            font-weight: bold;
+            color: #fbbf24;
+            min-width: 30px;
+            font-size: 1.1rem;
+        }
+        .my-best-score .name {
+            flex-grow: 1;
+            text-align: left;
+            margin: 0 15px;
+            font-size: 1rem;
+        }
+        .my-best-score .score {
+            font-weight: bold;
+            color: #4ade80;
+            font-size: 1.1rem;
+        }
+        .my-best-score .date {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            margin-left: 10px;
+        }
+        .ranking-divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, #fbbf24, #4ade80);
+            margin: 8px 0 8px 0;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -686,19 +730,19 @@
     
     <div class="nickname-modal" id="nicknameModal">
         <div class="nickname-content">
-            <h2>ニックネームを入力</h2>
-            <input type="text" id="nicknameInput" placeholder="ニックネームを入力してください" maxlength="10">
-            <button class="btn nickname-start" id="nicknameSubmit">スタート</button>
+            <h2>Enter your nickname</h2>
+            <input type="text" id="nicknameInput" placeholder="Enter your nickname" maxlength="10">
+            <button class="btn nickname-start" id="nicknameSubmit">Start</button>
         </div>
     </div>
 
     <div class="game-container">
-        <h1 class="title">🔥Typing Dod🔥</h1>
-        <button class="btn start" id="startButton">Enterを押してゲームスタート！</button>
+        <h1 class="title">🔥Typing God🔥</h1>
+        <button class="btn start" id="startButton">Press ENTER to start the game!</button>
         
         <div class="stats">
             <div class="stat-item">
-                <div class="stat-label">スコア</div>
+                <div class="stat-label">Score</div>
                 <div class="stat-value" id="score">0</div>
             </div>
             <div class="stat-item">
@@ -706,11 +750,11 @@
                 <div class="stat-value" id="wpm">0</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">正解数</div>
+                <div class="stat-label">Name</div>
                 <div class="stat-value" id="correctCount">0</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">残り時間</div>
+                <div class="stat-label">Time Left</div>
                 <div class="stat-value" id="timeLeft">60</div>
             </div>
         </div>
@@ -720,9 +764,6 @@
             <div class="romaji-hint" id="romajiHint" style="margin-top:10px;font-size:1.3rem;color:#a3e635;text-shadow:0 0 8px #222;letter-spacing:2px;"></div>
             <div class="word-meaning" id="wordMeaning"></div>
         </div>
-
-        <input type="text" class="typing-input" id="typingInput" 
-               placeholder="英単語を入力してください..." disabled autocomplete="off">
 
         <div class="controls">
             <button class="btn secondary" id="resetBtn">RESET</button>
@@ -734,31 +775,33 @@
 
     <div class="ranking-container">
         <div class="ranking-header">
-            <h3>🏆 ランキング 🏆</h3>
+            <h3>🏆 Ranking 🏆</h3>
             <div class="ranking-tabs">
-                <button class="ranking-tab active" data-tab="all">全体</button>
-                <button class="ranking-tab" data-tab="today">今日</button>
+                <button class="ranking-tab active" data-tab="all">All</button>
+                <button class="ranking-tab" data-tab="today">Today</button>
             </div>
         </div>
+        <div class="my-best-score ranking-item" id="myBestScore"></div>
+        <div class="ranking-divider"></div>
         <div class="ranking-list" id="rankingList"></div>
     </div>
 
     <div class="game-over" id="gameOver">
         <div class="game-over-content">
-            <h2>ゲーム終了！</h2>
+            <h2>Game Over!</h2>
             <div class="wpm-highlight" id="finalWpm">0 WPM</div>
-            <div>最終スコア: <span id="finalScore">0</span></div>
-            <div>正解単語数: <span id="finalCorrectCount">0</span></div>
-            <div>最大コンボ: <span id="maxCombo">0</span></div>
+            <div>Final Score: <span id="finalScore">0</span></div>
+            <div>Correct Words: <span id="finalCorrectCount">0</span></div>
+            <div>Max Combo: <span id="maxCombo">0</span></div>
             <div class="player-name-input">
-                <input type="text" id="playerName" placeholder="あなたの名前を入力" maxlength="10">
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="10">
             </div>
             <div class="ranking-section">
-                <h3>🏆 ランキング 🏆</h3>
+                <h3>🏆 Ranking 🏆</h3>
                 <div id="rankingList"></div>
             </div>
             <br>
-            <button class="btn" onclick="saveScoreAndClose()">スコアを保存して終了</button>
+            <button class="btn" onclick="saveScoreAndClose()">Play Again</button>
         </div>
     </div>
 
@@ -863,8 +906,41 @@
                 const rankingList = document.getElementById('rankingList');
                 rankingList.innerHTML = '';
 
-                const filteredRankings = this.getFilteredRankings();
-                
+                // 自分のベストスコア表示
+                const myBestScoreDiv = document.getElementById('myBestScore');
+                let filteredRankings = this.getFilteredRankings();
+
+                // ★ ひとり一枠：ニックネームごとに最高スコアのみ残す
+                const bestByName = {};
+                filteredRankings.forEach(r => {
+                    if (!bestByName[r.name] || bestByName[r.name].score < r.score) {
+                        bestByName[r.name] = r;
+                    }
+                });
+                filteredRankings = Object.values(bestByName).sort((a, b) => b.score - a.score);
+
+                // 自分のベストスコアを再取得
+                const nickname = localStorage.getItem('playerNickname') || '';
+                let myBest = null;
+                if (nickname) {
+                    myBest = filteredRankings.filter(r => r.name === nickname)[0];
+                }
+                if (myBest) {
+                    const myIndex = filteredRankings.findIndex(r => r.name === nickname);
+                    const myRank = myIndex >= 0 ? `#${myIndex + 1}` : '#?';
+                    myBestScoreDiv.className = 'my-best-score ranking-item';
+                    myBestScoreDiv.innerHTML = `
+                        <span class="rank">${myRank}</span>
+                        <span class="name">${myBest.name}</span>
+                        <span class="score">${myBest.score}</span>
+                        <span class="date">${myBest.date}</span>
+                    `;
+                    myBestScoreDiv.style.display = 'flex';
+                } else {
+                    myBestScoreDiv.innerHTML = '';
+                    myBestScoreDiv.style.display = 'none';
+                }
+
                 if (filteredRankings.length === 0) {
                     const emptyMessage = document.createElement('div');
                     emptyMessage.className = 'ranking-empty';
@@ -1080,7 +1156,6 @@
             initElements() {
                 this.currentWordElement = document.getElementById('currentWord');
                 this.wordMeaningElement = document.getElementById('wordMeaning');
-                this.typingInput = document.getElementById('typingInput');
                 this.scoreElement = document.getElementById('score');
                 this.wpmElement = document.getElementById('wpm');
                 this.correctCountElement = document.getElementById('correctCount');
@@ -1095,7 +1170,7 @@
             initEventListeners() {
                 this.startButton.addEventListener('click', () => this.startGame());
                 this.resetBtn.addEventListener('click', () => this.resetGame());
-                this.typingInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !this.isGameActive) {
                         this.startGame();
@@ -1110,6 +1185,117 @@
                         }
                     }
                 });
+            }
+
+            handleKeyDown(e) {
+                if (!this.isGameActive) return;
+
+                const expectedChar = this.currentWord.word[this.currentCharIndex];
+                const inputChar = e.key.toLowerCase();
+
+                if (inputChar === expectedChar?.toLowerCase()) {
+                    this.playSound(700 + this.currentCharIndex * 80, 0.06, 'triangle', 0.35);
+                    this.currentCharIndex++;
+                    this.displayCurrentWord();
+
+                    if (this.currentCharIndex >= this.currentWord.word.length) {
+                        this.completeWord();
+                    }
+                } else if (inputChar.length === 1 && inputChar.match(/[a-z]/)) {
+                    e.preventDefault();
+                    this.playSound(120, 0.3, 'sawtooth', 0.4);
+                    this.showWrongKeyEffect();
+                    this.resetCombo();
+                } else if (e.key === 'Backspace') {
+                    e.preventDefault();
+                }
+            }
+
+            completeWord() {
+                this.correctCount++;
+                this.combo++;
+                this.maxCombo = Math.max(this.maxCombo, this.combo);
+                const baseScore = this.currentWord.word.length * 150;
+                const comboBonus = Math.floor(baseScore * (this.combo - 1) * 0.25);
+                const totalScore = baseScore + comboBonus;
+                this.score += totalScore;
+
+                this.showComboPopup(this.combo);
+
+                if (this.combo >= 7) {
+                    this.playAdoremarinRush();
+                    this.flashScreen('rgba(0,255,255,0.8)');
+                    this.showScorePopup(`✨${this.getRandomPraisePhrase()}✨ +${totalScore}`, '#00ffff');
+                    document.body.classList.add('fever-mode');
+                    this.showJackpotEffect();
+                    this.showKyuinEffect();
+                    this.showAdoremarinRushUI();
+                    this.timeLeft += 2;
+                    this.timeLeftElement.textContent = this.timeLeft;
+                } else if (this.combo >= 5) {
+                    this.playUltimateSound();
+                    this.flashScreen('rgba(255,23,68,0.6)');
+                    this.showScorePopup(`🔥💥ULTIMATE💥🔥 +${totalScore}`, '#ff1744');
+                    document.body.classList.add('fever-mode');
+                    this.showJackpotEffect();
+                    this.showKyuinEffect();
+                    this.timeLeft++;
+                    this.timeLeftElement.textContent = this.timeLeft;
+                } else if (this.combo >= 3) {
+                    this.playExplosiveCombo();
+                    this.flashScreen('rgba(74,222,128,0.4)');
+                    this.showScorePopup(`⚡EXPLOSIVE⚡ +${totalScore}`, '#4ade80');
+                } else {
+                    this.playSound(900 + this.combo * 150, 0.12, 'triangle', 0.35);
+                    this.showScorePopup(`+${totalScore}`, '#fbbf24');
+                }
+                this.updateComboDisplay();
+                this.updateStats();
+                setTimeout(() => {
+                    this.loadNewWord();
+                }, 250);
+            }
+
+            showWrongKeyEffect() {
+                this.flashScreen('rgba(255,107,107,0.3)');
+            }
+
+            resetCombo() {
+                this.combo = 0;
+                this.comboDisplay.classList.remove('show');
+                document.body.classList.remove('fever-mode');
+            }
+
+            updateComboDisplay() {
+                if (this.combo >= 2) {
+                    this.comboDisplay.textContent = `🔥 COMBO x${this.combo} 🔥`;
+                    this.comboDisplay.classList.add('show');
+                    if (this.combo >= 7) {
+                        this.comboDisplay.classList.add('ultimate');
+                        this.comboDisplay.style.background = 'linear-gradient(45deg, #ff1744, #ff6b00)';
+                    } else if (this.combo >= 5) {
+                        this.comboDisplay.classList.remove('ultimate');
+                        this.comboDisplay.style.background = 'linear-gradient(45deg, #4ade80, #22c55e)';
+                    }
+                } else {
+                    this.comboDisplay.classList.remove('show');
+                    this.comboDisplay.classList.remove('ultimate');
+                    this.comboDisplay.style.background = 'linear-gradient(45deg, #ff6b6b, #fbbf24)';
+                }
+            }
+
+            showScorePopup(text, color) {
+                this.scorePopup.textContent = text;
+                this.scorePopup.style.color = color;
+                this.scorePopup.style.animation = 'score-popup 1.2s ease-out forwards';
+                setTimeout(() => {
+                    this.scorePopup.style.animation = '';
+                }, 1200);
+            }
+
+            updateStats() {
+                this.scoreElement.textContent = this.score;
+                this.correctCountElement.textContent = this.correctCount;
             }
 
             initAudio() {
@@ -1207,7 +1393,6 @@
                 this.currentWord = wordList[randomIndex];
                 this.currentCharIndex = 0;
                 this.displayCurrentWord();
-                this.typingInput.value = '';
             }
 
             displayCurrentWord() {
@@ -1240,8 +1425,6 @@
                 this.isGameActive = true;
                 this.startTime = Date.now();
                 this.timeLeft = 60;
-                this.typingInput.disabled = false;
-                this.typingInput.focus();
                 this.startButton.style.display = 'none';
                 
                 if (this.timer) {
@@ -1261,134 +1444,9 @@
                 }, 100);
             }
 
-            handleKeyDown(e) {
-                if (!this.isGameActive) return;
-
-                const expectedChar = this.currentWord.word[this.currentCharIndex];
-                const inputChar = e.key.toLowerCase();
-                
-                if (inputChar === expectedChar.toLowerCase()) {
-                    this.playSound(700 + this.currentCharIndex * 80, 0.06, 'triangle', 0.35);
-                    this.currentCharIndex++;
-                    this.displayCurrentWord();
-                    
-                    if (this.currentCharIndex >= this.currentWord.word.length) {
-                        this.completeWord();
-                    }
-                } else if (inputChar.length === 1 && inputChar.match(/[a-z]/)) {
-                    e.preventDefault();
-                    this.playSound(120, 0.3, 'sawtooth', 0.4);
-                    this.showWrongKeyEffect();
-                    this.resetCombo();
-                } else if (e.key === 'Backspace') {
-                    e.preventDefault();
-                }
-            }
-
-            completeWord() {
-                this.correctCount++;
-                this.combo++;
-                this.maxCombo = Math.max(this.maxCombo, this.combo);
-                const baseScore = this.currentWord.word.length * 150;
-                const comboBonus = Math.floor(baseScore * (this.combo - 1) * 0.25);
-                const totalScore = baseScore + comboBonus;
-                this.score += totalScore;
-
-                this.showComboPopup(this.combo);
-
-                if (this.combo >= 7) {
-                    this.playAdoremarinRush();
-                    this.flashScreen('rgba(0,255,255,0.8)');
-                    this.showScorePopup(`✨${this.getRandomPraisePhrase()}✨ +${totalScore}`, '#00ffff');
-                    document.body.classList.add('fever-mode');
-                    this.showJackpotEffect();
-                    this.showKyuinEffect();
-                    this.showAdoremarinRushUI();
-                    this.timeLeft += 2;
-                    this.timeLeftElement.textContent = this.timeLeft;
-                } else if (this.combo >= 5) {
-                    this.playUltimateSound();
-                    this.flashScreen('rgba(255,23,68,0.6)');
-                    this.showScorePopup(`🔥💥ULTIMATE💥🔥 +${totalScore}`, '#ff1744');
-                    document.body.classList.add('fever-mode');
-                    this.showJackpotEffect();
-                    this.showKyuinEffect();
-                    this.timeLeft++;
-                    this.timeLeftElement.textContent = this.timeLeft;
-                } else if (this.combo >= 3) {
-                    this.playExplosiveCombo();
-                    this.flashScreen('rgba(74,222,128,0.4)');
-                    this.showScorePopup(`⚡EXPLOSIVE⚡ +${totalScore}`, '#4ade80');
-                } else {
-                    this.playSound(900 + this.combo * 150, 0.12, 'triangle', 0.35);
-                    this.showScorePopup(`+${totalScore}`, '#fbbf24');
-                }
-                this.updateComboDisplay();
-                this.updateStats();
-                setTimeout(() => {
-                    this.loadNewWord();
-                }, 250);
-            }
-
-            showWrongKeyEffect() {
-                this.typingInput.classList.add('shake');
-                this.flashScreen('rgba(255,107,107,0.3)');
-                setTimeout(() => {
-                    this.typingInput.classList.remove('shake');
-                }, 400);
-            }
-
-            resetCombo() {
-                this.combo = 0;
-                this.comboDisplay.classList.remove('show');
-                document.body.classList.remove('fever-mode');
-            }
-
-            updateComboDisplay() {
-                if (this.combo >= 2) {
-                    this.comboDisplay.textContent = `🔥 COMBO x${this.combo} 🔥`;
-                    this.comboDisplay.classList.add('show');
-                    if (this.combo >= 7) {
-                        this.comboDisplay.classList.add('ultimate');
-                        this.comboDisplay.style.background = 'linear-gradient(45deg, #ff1744, #ff6b00)';
-                    } else if (this.combo >= 5) {
-                        this.comboDisplay.classList.remove('ultimate');
-                        this.comboDisplay.style.background = 'linear-gradient(45deg, #4ade80, #22c55e)';
-                    }
-                } else {
-                    this.comboDisplay.classList.remove('show');
-                    this.comboDisplay.classList.remove('ultimate');
-                    this.comboDisplay.style.background = 'linear-gradient(45deg, #ff6b6b, #fbbf24)';
-                }
-            }
-
-            showScorePopup(text, color) {
-                this.scorePopup.textContent = text;
-                this.scorePopup.style.color = color;
-                this.scorePopup.style.animation = 'score-popup 1.2s ease-out forwards';
-                
-                setTimeout(() => {
-                    this.scorePopup.style.animation = '';
-                }, 1200);
-            }
-
-            updateStats() {
-                this.scoreElement.textContent = this.score;
-                this.correctCountElement.textContent = this.correctCount;
-            }
-
-            updateWPM() {
-                if (!this.startTime) return;
-                
-                const timeElapsed = (Date.now() - this.startTime) / 1000 / 60;
-                const wpm = Math.round(this.correctCount / timeElapsed) || 0;
-                this.wpmElement.textContent = wpm;
-            }
-
             endGame() {
                 this.isGameActive = false;
                 clearInterval(this.timer);
-                this.typingInput.disabled = true;
                 this.startButton.style.display = 'block';
                 document.body.classList.remove('fever-mode');
                 this.showGameOver();
@@ -1418,8 +1476,6 @@
                 this.startTime = null;
                 this.timeLeft = 60;
 
-                this.typingInput.value = '';
-                this.typingInput.disabled = true;
                 this.startButton.style.display = 'block';
                 
                 this.scoreElement.textContent = '0';
@@ -1525,6 +1581,14 @@
                 setTimeout(() => {
                     if (comboDiv.parentNode) comboDiv.parentNode.removeChild(comboDiv);
                 }, 1000);
+            }
+
+            updateWPM() {
+                if (!this.startTime) return;
+                
+                const timeElapsed = (Date.now() - this.startTime) / 1000 / 60;
+                const wpm = Math.round(this.correctCount / timeElapsed) || 0;
+                this.wpmElement.textContent = wpm;
             }
         }
 
