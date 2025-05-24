@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Dod🔥</title>
+    <link href="https://fonts.googleapis.com/css2?family=Reggae+One&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: radial-gradient(circle at center, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+        }
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .particle {
+            position: absolute;
+            background: #ff6b6b;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 3s linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+        .game-container {
+            background: linear-gradient(135deg, rgba(255,107,107,0.15), rgba(74,222,128,0.15));
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 25px;
+            padding: 30px;
+            max-width: 900px;
+            width: calc(95% - 320px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            animation: container-pulse 2s infinite;
+            margin-right: 320px;
+        }
+        @keyframes container-pulse {
+            0% { box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
+            50% { box-shadow: 0 25px 50px rgba(255,23,68,0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
+        }
+        .title {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #fbbf24, #4ade80, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: title-glow 2s ease-in-out infinite alternate;
+            text-shadow: 0 0 20px rgba(255,107,107,0.5);
+            letter-spacing: 5px;
+            font-family: 'Reggae One', cursive, sans-serif;
+        }
+        @keyframes title-glow {
+            0% { filter: drop-shadow(0 0 10px #ff6b6b); }
+            100% { filter: drop-shadow(0 0 20px #4ade80); }
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-item {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .stat-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.3);
+        }
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .stat-label { font-size: 0.9rem; opacity: 0.8; }
+        .stat-value { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            margin-top: 5px;
+            text-shadow: 0 0 10px currentColor;
+            background: linear-gradient(45deg, #ff6b6b, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .word-display {
+            background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(16,16,32,0.9));
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 2px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: visible;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+        .word-display::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(90deg, #ff6b6b, #4ade80, #3b82f6, #fbbf24);
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0.3;
+        }
+        @keyframes border-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .current-word {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            letter-spacing: 10px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        .char {
+            display: inline-block;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .char.correct { 
+            color: #4ade80; 
+            text-shadow: 0 0 15px #4ade80;
+            transform: scale(1.1);
+        }
+        .char.current { 
+            color: #fbbf24; 
+            animation: intense-pulse 0.3s infinite;
+            text-shadow: 0 0 20px #fbbf24;
+        }
+        .char.pending { color: rgba(255, 255, 255, 0.4); }
+        @keyframes intense-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.2); }
+        }
+        .word-meaning {
+            font-size: 1.3rem;
+            color: #a3a3a3;
+            font-style: italic;
+            text-shadow: 0 0 5px rgba(163,163,163,0.5);
+        }
+        .typing-input {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            color: white;
+            outline: none;
+            font-family: inherit;
+            text-align: center;
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .typing-input:focus {
+            border-color: #4ade80;
+            box-shadow: 0 0 30px rgba(74, 222, 128, 0.5);
+            background: linear-gradient(135deg, rgba(74,222,128,0.1), rgba(74,222,128,0.05));
+            transform: translateY(-2px);
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(255,107,107,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: btn-shine 3s infinite;
+        }
+        @keyframes btn-shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .btn:hover { 
+            transform: translateY(-3px) scale(1.05); 
+            box-shadow: 0 8px 25px rgba(255,107,107,0.4);
+        }
+        .btn.secondary { 
+            background: linear-gradient(45deg, #74b9ff, #0984e3); 
+            box-shadow: 0 5px 15px rgba(116,185,255,0.3);
+        }
+        .btn.start { 
+            background: linear-gradient(45deg, #4ade80, #22c55e); 
+            box-shadow: 0 5px 15px rgba(74,222,128,0.3);
+            font-size: 1.5rem;
+            padding: 20px 40px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            animation: start-btn-pulse 2s infinite;
+        }
+        @keyframes start-btn-pulse {
+            0% { box-shadow: 0 5px 15px rgba(74,222,128,0.3); }
+            50% { box-shadow: 0 5px 30px rgba(74,222,128,0.6); }
+            100% { box-shadow: 0 5px 15px rgba(74,222,128,0.3); }
+        }
+        .game-container.game-started .btn.start {
+            display: none;
+        }
+        .score-popup {
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translate(-50%, 0);
+            font-size: 2.5rem;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+            text-shadow: 0 0 20px currentColor;
+            white-space: nowrap;
+        }
+        .combo-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #fbbf24);
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .combo-display.show { 
+            opacity: 1; 
+            animation: combo-bounce 0.5s ease;
+        }
+        @keyframes combo-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .combo-display.ultimate {
+            background: linear-gradient(45deg, #ff1744, #ff6b00, #ff1744);
+            background-size: 200% 200%;
+            animation: ultimate-gradient 2s linear infinite;
+            text-shadow: 0 0 10px #ff1744, 0 0 20px #ff1744, 0 0 30px #ff1744;
+            box-shadow: 0 5px 20px rgba(255,23,68,0.6);
+        }
+        .fever-mode {
+            animation: fever-flash 0.1s infinite !important;
+        }
+        @keyframes fever-flash {
+            0% { filter: hue-rotate(0deg) brightness(1); }
+            25% { filter: hue-rotate(90deg) brightness(1.3); }
+            50% { filter: hue-rotate(180deg) brightness(1.6); }
+            75% { filter: hue-rotate(270deg) brightness(1.3); }
+            100% { filter: hue-rotate(360deg) brightness(1); }
+        }
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .game-over-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        .player-name-input {
+            margin: 20px 0;
+        }
+        .player-name-input input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .player-name-input input:focus {
+            border-color: #4ade80;
+            box-shadow: 0 0 20px rgba(74,222,128,0.3);
+            outline: none;
+        }
+        .ranking-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .ranking-section h3 {
+            margin-bottom: 15px;
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251,191,36,0.5);
+        }
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .ranking-item:hover {
+            transform: translateX(5px);
+            background: rgba(255,255,255,0.15);
+        }
+        .ranking-item .rank {
+            font-weight: bold;
+            color: #fbbf24;
+            min-width: 30px;
+        }
+        .ranking-item .name {
+            flex-grow: 1;
+            text-align: left;
+            margin: 0 15px;
+        }
+        .ranking-item .score {
+            font-weight: bold;
+            color: #4ade80;
+        }
+        .wpm-highlight {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4ade80;
+            margin: 20px 0;
+            text-shadow: 0 0 20px #4ade80;
+        }
+        .shake { animation: violent-shake 0.4s ease-in-out; }
+        @keyframes violent-shake {
+            0%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-8px) rotate(-1deg); }
+            20% { transform: translateX(8px) rotate(1deg); }
+            30% { transform: translateX(-6px) rotate(-1deg); }
+            40% { transform: translateX(6px) rotate(1deg); }
+            50% { transform: translateX(-4px); }
+            60% { transform: translateX(4px); }
+            70% { transform: translateX(-2px); }
+            80% { transform: translateX(2px); }
+            90% { transform: translateX(-1px); }
+        }
+        @keyframes score-popup {
+            0% { opacity: 0; transform: translate(-50%, 0) scale(0.3) rotate(-10deg); }
+            20% { opacity: 1; transform: translate(-50%, 0) scale(1.3) rotate(5deg); }
+            40% { transform: translate(-50%, 0) scale(1.1) rotate(-2deg); }
+            60% { transform: translate(-50%, 0) scale(1.2) rotate(1deg); }
+            100% { opacity: 0; transform: translate(-50%, -100px) scale(1) rotate(0deg); }
+        }
+        .screen-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.3);
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+        }
+        .flash-effect {
+            animation: screen-flash 0.2s ease-out;
+        }
+        @keyframes screen-flash {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .jackpot-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.8), transparent);
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+        }
+        .kyuin-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 998;
+            opacity: 0;
+        }
+        .kyuin-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff1744, transparent);
+            animation: kyuin-move 0.3s linear infinite;
+        }
+        @keyframes kyuin-move {
+            0% { transform: translateY(0) scaleX(0.5); opacity: 0; }
+            50% { transform: translateY(50vh) scaleX(1); opacity: 1; }
+            100% { transform: translateY(100vh) scaleX(0.5); opacity: 0; }
+        }
+        .kyuin-text {
+            position: absolute;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ff1744;
+            text-shadow: 0 0 10px #ff1744, 0 0 20px #ff1744;
+            animation: kyuin-text 0.5s ease-out;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        @keyframes kyuin-text {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 0; }
+        }
+        @keyframes adoremarin-rush-anim {
+            0% { opacity: 0; transform: translate(-50%, -60%) scale(0.7) rotate(-10deg); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
+            60% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(-2deg); }
+            100% { opacity: 0; transform: translate(-50%, -40%) scale(1.3) rotate(0deg); }
+        }
+        @keyframes combo-popup-anim {
+            0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); }
+            20% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+            60% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+            100% { opacity: 0; transform: translate(-50%, 30%) scale(1.3); }
+        }
+        @keyframes text-glow {
+            0% { filter: drop-shadow(0 0 20px #00ffff) drop-shadow(0 0 40px #00ffff); }
+            50% { filter: drop-shadow(0 0 40px #00ffff) drop-shadow(0 0 80px #00ffff); }
+            100% { filter: drop-shadow(0 0 20px #00ffff) drop-shadow(0 0 40px #00ffff); }
+        }
+        .ranking-container {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100vh;
+            background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(16,16,32,0.9));
+            padding: 20px;
+            z-index: 1000;
+            border-left: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .ranking-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        .ranking-header h3 {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251,191,36,0.5);
+            margin-bottom: 15px;
+        }
+        .ranking-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .ranking-tab {
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .ranking-tab:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .ranking-tab.active {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            box-shadow: 0 0 15px rgba(251,191,36,0.3);
+        }
+        .ranking-list {
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .ranking-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        .ranking-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        .ranking-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+        }
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .ranking-item:hover {
+            transform: translateX(-5px);
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .ranking-item .rank {
+            font-weight: bold;
+            color: #fbbf24;
+            min-width: 30px;
+            font-size: 1.1rem;
+        }
+        .ranking-item .name {
+            flex-grow: 1;
+            text-align: left;
+            margin: 0 15px;
+            font-size: 1rem;
+        }
+        .ranking-item .score {
+            font-weight: bold;
+            color: #4ade80;
+            font-size: 1.1rem;
+        }
+        .ranking-item .date {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            margin-left: 10px;
+        }
+        .nickname-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+        }
+        .nickname-content {
+            background: linear-gradient(135deg, rgba(255,107,107,0.15), rgba(74,222,128,0.15));
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: container-pulse 2s infinite;
+        }
+        .nickname-content h2 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            font-family: 'Reggae One', cursive, sans-serif;
+        }
+        .nickname-content input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .nickname-content input:focus {
+            border-color: #4ade80;
+            box-shadow: 0 0 20px rgba(74,222,128,0.3);
+            outline: none;
+        }
+        .nickname-content input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        .nickname-content .nickname-start {
+            position: static;
+            width: 100%;
+            margin: 0 auto;
+            display: block;
+            font-size: 1.2rem;
+            padding: 15px 0;
+            background: linear-gradient(45deg, #4ade80, #22c55e);
+            box-shadow: 0 5px 15px rgba(74,222,128,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+    <div class="screen-flash" id="screenFlash"></div>
+    
+    <div class="nickname-modal" id="nicknameModal">
+        <div class="nickname-content">
+            <h2>ニックネームを入力</h2>
+            <input type="text" id="nicknameInput" placeholder="ニックネームを入力してください" maxlength="10">
+            <button class="btn nickname-start" id="nicknameSubmit">スタート</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <h1 class="title">🔥Typing Dod🔥</h1>
+        <button class="btn start" id="startButton">Enterを押してゲームスタート！</button>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">スコア</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">WPM</div>
+                <div class="stat-value" id="wpm">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">正解数</div>
+                <div class="stat-value" id="correctCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">残り時間</div>
+                <div class="stat-value" id="timeLeft">60</div>
+            </div>
+        </div>
+
+        <div class="word-display">
+            <div class="current-word" id="currentWord"></div>
+            <div class="romaji-hint" id="romajiHint" style="margin-top:10px;font-size:1.3rem;color:#a3e635;text-shadow:0 0 8px #222;letter-spacing:2px;"></div>
+            <div class="word-meaning" id="wordMeaning"></div>
+        </div>
+
+        <input type="text" class="typing-input" id="typingInput" 
+               placeholder="英単語を入力してください..." disabled autocomplete="off">
+
+        <div class="controls">
+            <button class="btn secondary" id="resetBtn">RESET</button>
+        </div>
+
+        <div class="score-popup" id="scorePopup"></div>
+        <div class="combo-display" id="comboDisplay">COMBO x1</div>
+    </div>
+
+    <div class="ranking-container">
+        <div class="ranking-header">
+            <h3>🏆 ランキング 🏆</h3>
+            <div class="ranking-tabs">
+                <button class="ranking-tab active" data-tab="all">全体</button>
+                <button class="ranking-tab" data-tab="today">今日</button>
+            </div>
+        </div>
+        <div class="ranking-list" id="rankingList"></div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+            <h2>ゲーム終了！</h2>
+            <div class="wpm-highlight" id="finalWpm">0 WPM</div>
+            <div>最終スコア: <span id="finalScore">0</span></div>
+            <div>正解単語数: <span id="finalCorrectCount">0</span></div>
+            <div>最大コンボ: <span id="maxCombo">0</span></div>
+            <div class="player-name-input">
+                <input type="text" id="playerName" placeholder="あなたの名前を入力" maxlength="10">
+            </div>
+            <div class="ranking-section">
+                <h3>🏆 ランキング 🏆</h3>
+                <div id="rankingList"></div>
+            </div>
+            <br>
+            <button class="btn" onclick="saveScoreAndClose()">スコアを保存して終了</button>
+        </div>
+    </div>
+
+    <div class="jackpot-effect" id="jackpotEffect"></div>
+    <div class="kyuin-effect" id="kyuinEffect"></div>
+
+    <script>
+        // Firebase設定
+        const firebaseConfig = {
+            // ここにFirebaseの設定を入力してください
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Firebase初期化
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        class RankingManager {
+            constructor() {
+                this.rankings = [];
+                this.maxRankings = 10;
+                this.currentTab = 'all';
+                this.initTabs();
+                this.loadRankings();
+            }
+
+            initTabs() {
+                const tabs = document.querySelectorAll('.ranking-tab');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        this.currentTab = tab.dataset.tab;
+                        this.displayRankings();
+                    });
+                });
+            }
+
+            async loadRankings() {
+                try {
+                    const snapshot = await database.ref('rankings').once('value');
+                    this.rankings = snapshot.val() || [];
+                    this.displayRankings();
+                } catch (error) {
+                    console.error('ランキングの読み込みに失敗しました:', error);
+                }
+            }
+
+            async checkNicknameExists(nickname) {
+                try {
+                    const snapshot = await database.ref('nicknames').child(nickname).once('value');
+                    return snapshot.exists();
+                } catch (error) {
+                    console.error('ニックネームの確認に失敗しました:', error);
+                    return false;
+                }
+            }
+
+            async addScore(name, score, wpm, correctCount, maxCombo) {
+                try {
+                    const newScore = {
+                        name: name,
+                        score: score,
+                        wpm: wpm,
+                        correctCount: correctCount,
+                        maxCombo: maxCombo,
+                        date: new Date().toLocaleDateString(),
+                        timestamp: new Date().getTime()
+                    };
+
+                    // スコアを追加
+                    const scoreRef = database.ref('rankings').push();
+                    await scoreRef.set(newScore);
+
+                    // ニックネームを保存
+                    await database.ref('nicknames').child(name).set(true);
+
+                    // ランキングを更新
+                    await this.loadRankings();
+                } catch (error) {
+                    console.error('スコアの保存に失敗しました:', error);
+                }
+            }
+
+            getFilteredRankings() {
+                if (this.currentTab === 'today') {
+                    const today = new Date().toLocaleDateString();
+                    return this.rankings.filter(rank => rank.date === today);
+                }
+                return this.rankings;
+            }
+
+            displayRankings() {
+                const rankingList = document.getElementById('rankingList');
+                rankingList.innerHTML = '';
+
+                const filteredRankings = this.getFilteredRankings();
+                
+                if (filteredRankings.length === 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'ranking-empty';
+                    emptyMessage.textContent = 'まだスコアがありません';
+                    emptyMessage.style.textAlign = 'center';
+                    emptyMessage.style.padding = '20px';
+                    emptyMessage.style.color = 'rgba(255,255,255,0.5)';
+                    rankingList.appendChild(emptyMessage);
+                    return;
+                }
+
+                filteredRankings.forEach((rank, index) => {
+                    const rankElement = document.createElement('div');
+                    rankElement.className = 'ranking-item';
+                    rankElement.innerHTML = `
+                        <span class="rank">#${index + 1}</span>
+                        <span class="name">${rank.name}</span>
+                        <span class="score">${rank.score}</span>
+                        <span class="date">${rank.date}</span>
+                    `;
+                    rankingList.appendChild(rankElement);
+                });
+            }
+        }
+
+        class TypingGame {
+            constructor() {
+                this.words = [
+                    { word: "basic", meaning: "基本の" },
+                    { word: "office", meaning: "事務所" },
+                    { word: "company", meaning: "会社" },
+                    { word: "employee", meaning: "従業員" },
+                    { word: "manager", meaning: "管理者" },
+                    { word: "meeting", meaning: "会議" },
+                    { word: "schedule", meaning: "予定" },
+                    { word: "report", meaning: "報告書" },
+                    { word: "project", meaning: "プロジェクト" },
+                    { word: "customer", meaning: "顧客" },
+                    { word: "client", meaning: "取引先" },
+                    { word: "service", meaning: "サービス" },
+                    { word: "product", meaning: "製品" },
+                    { word: "order", meaning: "注文" },
+                    { word: "delivery", meaning: "配達" },
+                    { word: "payment", meaning: "支払い" },
+                    { word: "invoice", meaning: "請求書" },
+                    { word: "contract", meaning: "契約" },
+                    { word: "agreement", meaning: "合意" },
+                    { word: "offer", meaning: "申し出" },
+                    { word: "request", meaning: "依頼" },
+                    { word: "information", meaning: "情報" },
+                    { word: "address", meaning: "住所" },
+                    { word: "phone", meaning: "電話" },
+                    { word: "email", meaning: "メール" },
+                    { word: "answer", meaning: "答え" },
+                    { word: "question", meaning: "質問" },
+                    { word: "explain", meaning: "説明する" },
+                    { word: "confirm", meaning: "確認する" },
+                    { word: "check", meaning: "確認する" },
+                    { word: "send", meaning: "送る" },
+                    { word: "receive", meaning: "受け取る" },
+                    { word: "prepare", meaning: "準備する" },
+                    { word: "finish", meaning: "終える" },
+                    { word: "start", meaning: "始める" },
+                    { word: "open", meaning: "開く" },
+                    { word: "close", meaning: "閉じる" },
+                    { word: "attend", meaning: "出席する" },
+                    { word: "participate", meaning: "参加する" },
+                    { word: "visit", meaning: "訪問する" },
+                    { word: "travel", meaning: "旅行する" },
+                    { word: "arrive", meaning: "到着する" },
+                    { word: "leave", meaning: "出発する" },
+                    { word: "return", meaning: "戻る" },
+                    { word: "plan", meaning: "計画する" },
+                    { word: "decide", meaning: "決める" },
+                    { word: "discuss", meaning: "議論する" },
+                    { word: "suggest", meaning: "提案する" },
+                    { word: "recommend", meaning: "勧める" },
+                    { word: "improve", meaning: "改善する" },
+                    { word: "increase", meaning: "増やす" },
+                    { word: "reduce", meaning: "減らす" },
+                    { word: "cost", meaning: "費用" },
+                    { word: "price", meaning: "価格" },
+                    { word: "budget", meaning: "予算" },
+                    { word: "profit", meaning: "利益" },
+                    { word: "loss", meaning: "損失" },
+                    { word: "sales", meaning: "売上" },
+                    { word: "market", meaning: "市場" },
+                    { word: "advertise", meaning: "宣伝する" },
+                    { word: "promotion", meaning: "昇進・販促" },
+                    { word: "event", meaning: "イベント" },
+                    { word: "seminar", meaning: "セミナー" },
+                    { word: "training", meaning: "研修" },
+                    { word: "interview", meaning: "面接" },
+                    { word: "experience", meaning: "経験" },
+                    { word: "skill", meaning: "スキル" },
+                    { word: "ability", meaning: "能力" },
+                    { word: "knowledge", meaning: "知識" },
+                    { word: "opportunity", meaning: "機会" },
+                    { word: "challenge", meaning: "挑戦" },
+                    { word: "goal", meaning: "目標" },
+                    { word: "result", meaning: "結果" },
+                    { word: "success", meaning: "成功" },
+                    { word: "failure", meaning: "失敗" },
+                    { word: "risk", meaning: "リスク" },
+                    { word: "support", meaning: "支援" },
+                    { word: "help", meaning: "助ける" },
+                    { word: "team", meaning: "チーム" },
+                    { word: "group", meaning: "グループ" },
+                    { word: "department", meaning: "部門" },
+                    { word: "section", meaning: "課・部" },
+                    { word: "branch", meaning: "支店" },
+                    { word: "head", meaning: "本部" },
+                    { word: "factory", meaning: "工場" },
+                    { word: "store", meaning: "店舗" },
+                    { word: "shop", meaning: "店" },
+                    { word: "building", meaning: "建物" },
+                    { word: "floor", meaning: "階" },
+                    { word: "room", meaning: "部屋" },
+                    { word: "desk", meaning: "机" },
+                    { word: "chair", meaning: "椅子" },
+                    { word: "computer", meaning: "コンピュータ" },
+                    { word: "document", meaning: "書類" },
+                    { word: "file", meaning: "ファイル" },
+                    { word: "paper", meaning: "紙" },
+                    { word: "copy", meaning: "コピー" },
+                    { word: "print", meaning: "印刷する" },
+                    { word: "fax", meaning: "ファックス" },
+                    { word: "mail", meaning: "郵便・メール" },
+                    { word: "message", meaning: "メッセージ" },
+                    { word: "call", meaning: "電話する" }
+                ];
+                this.longWords = [
+                    { word: "adventure", meaning: "冒険" },
+                    { word: "fantastic", meaning: "素晴らしい" },
+                    { word: "important", meaning: "重要な" },
+                    { word: "challenge", meaning: "挑戦" },
+                    { word: "discovery", meaning: "発見" },
+                    { word: "happiness", meaning: "幸せ" },
+                    { word: "wonderful", meaning: "素晴らしい" },
+                    { word: "dangerous", meaning: "危険な" },
+                    { word: "beautiful", meaning: "美しい" },
+                    { word: "knowledge", meaning: "知識" }
+                ];
+
+                this.currentWord = null;
+                this.currentCharIndex = 0;
+                this.score = 0;
+                this.correctCount = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.startTime = null;
+                this.timeLeft = 60;
+                this.isGameActive = false;
+                this.timer = null;
+                this.audioContext = null;
+                this.jackpotEffect = document.getElementById('jackpotEffect');
+                this.kyuinEffect = document.getElementById('kyuinEffect');
+                this.kyuinLines = [];
+                this.playerNickname = localStorage.getItem('playerNickname') || '';
+                this.createKyuinLines();
+                this.praisePhrases = [
+                    "INCREDIBLE!!",
+                    "AMAZING!!",
+                    "FANTASTIC!!",
+                    "AWESOME!!",
+                    "PERFECT!!",
+                    "BRILLIANT!!",
+                    "EXCELLENT!!",
+                    "OUTSTANDING!!",
+                    "PHENOMENAL!!",
+                    "SPECTACULAR!!",
+                    "MAGNIFICENT!!",
+                    "SUPERB!!",
+                    "MARVELOUS!!",
+                    "EXTRAORDINARY!!",
+                    "SENSATIONAL!!"
+                ];
+
+                this.initElements();
+                this.initEventListeners();
+                this.initAudio();
+                this.createParticles();
+                this.loadNewWord();
+                this.checkNickname();
+            }
+
+            async checkNickname() {
+                if (!this.playerNickname) {
+                    document.getElementById('nicknameModal').style.display = 'flex';
+                    document.getElementById('nicknameInput').focus();
+                } else {
+                    document.getElementById('nicknameModal').style.display = 'none';
+                }
+            }
+
+            async setNickname(nickname) {
+                try {
+                    const exists = await rankingManager.checkNicknameExists(nickname);
+                    if (exists) {
+                        alert('このニックネームは既に使用されています。別のニックネームを入力してください。');
+                        return;
+                    }
+
+                    this.playerNickname = nickname;
+                    localStorage.setItem('playerNickname', nickname);
+                    document.getElementById('nicknameModal').style.display = 'none';
+                } catch (error) {
+                    console.error('ニックネームの設定に失敗しました:', error);
+                    alert('ニックネームの設定に失敗しました。もう一度お試しください。');
+                }
+            }
+
+            initElements() {
+                this.currentWordElement = document.getElementById('currentWord');
+                this.wordMeaningElement = document.getElementById('wordMeaning');
+                this.typingInput = document.getElementById('typingInput');
+                this.scoreElement = document.getElementById('score');
+                this.wpmElement = document.getElementById('wpm');
+                this.correctCountElement = document.getElementById('correctCount');
+                this.timeLeftElement = document.getElementById('timeLeft');
+                this.startButton = document.getElementById('startButton');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.scorePopup = document.getElementById('scorePopup');
+                this.comboDisplay = document.getElementById('comboDisplay');
+                this.screenFlash = document.getElementById('screenFlash');
+            }
+
+            initEventListeners() {
+                this.startButton.addEventListener('click', () => this.startGame());
+                this.resetBtn.addEventListener('click', () => this.resetGame());
+                this.typingInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !this.isGameActive) {
+                        this.startGame();
+                    }
+                    if (e.key === 'Escape') {
+                        this.resetGame();
+                    }
+                    if (e.key === 'Enter') {
+                        const gameOverElem = document.getElementById('gameOver');
+                        if (gameOverElem && gameOverElem.style.display === 'flex') {
+                            closeGameOver();
+                        }
+                    }
+                });
+            }
+
+            initAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+
+            playSound(freq, duration = 0.1, type = 'sine', volume = 0.4) {
+                if (!this.audioContext) return;
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                osc.type = type;
+                gain.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                osc.start();
+                osc.stop(this.audioContext.currentTime + duration);
+            }
+
+            playExplosiveCombo() {
+                for (let i = 0; i < 12; i++) {
+                    setTimeout(() => {
+                        this.playSound(400 + i * 200, 0.08, 'square', 0.3);
+                    }, i * 25);
+                }
+                setTimeout(() => {
+                    this.playSound(1200, 0.4, 'sawtooth', 0.4);
+                }, 300);
+            }
+
+            playKyuinSound() {
+                const frequencies = [800, 1000, 1200, 1400, 1600];
+                frequencies.forEach((freq, i) => {
+                    setTimeout(() => {
+                        this.playSound(freq, 0.1, 'sine', 0.3);
+                        this.playSound(freq * 1.5, 0.1, 'sine', 0.2);
+                    }, i * 100);
+                });
+            }
+
+            playUltimateSound() {
+                const notes = [261, 329, 392, 523, 659, 784, 1047];
+                notes.forEach((note, i) => {
+                    setTimeout(() => this.playSound(note, 0.2, 'triangle', 0.3), i * 60);
+                });
+
+                this.playKyuinSound();
+
+                setTimeout(() => {
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            this.playSound(1500 + i * 300, 0.15, 'sawtooth', 0.5);
+                        }, i * 50);
+                    }
+                }, 420);
+
+                setTimeout(() => {
+                    this.playSound(800, 0.3, 'sine', 0.4);
+                    this.playSound(1200, 0.3, 'sine', 0.4);
+                    this.playSound(1600, 0.3, 'sine', 0.4);
+                }, 700);
+            }
+
+            createParticles() {
+                const container = document.getElementById('particles');
+                for (let i = 0; i < 30; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 3 + 's';
+                    particle.style.animationDuration = (2 + Math.random() * 2) + 's';
+                    container.appendChild(particle);
+                }
+            }
+
+            flashScreen(color = 'rgba(255,255,255,0.4)') {
+                this.screenFlash.style.background = color;
+                this.screenFlash.classList.add('flash-effect');
+                setTimeout(() => {
+                    this.screenFlash.classList.remove('flash-effect');
+                }, 200);
+            }
+
+            loadNewWord() {
+                let wordList = this.words;
+                if (this.combo >= 7) {
+                    wordList = this.longWords;
+                }
+                const randomIndex = Math.floor(Math.random() * wordList.length);
+                this.currentWord = wordList[randomIndex];
+                this.currentCharIndex = 0;
+                this.displayCurrentWord();
+                this.typingInput.value = '';
+            }
+
+            displayCurrentWord() {
+                if (!this.currentWord) return;
+                let displayStr = this.currentWord.word;
+                let html = '';
+                for (let i = 0; i < displayStr.length; i++) {
+                    const char = displayStr[i];
+                    let className = 'char pending';
+                    if (i < this.currentCharIndex) {
+                        className = 'char correct';
+                    } else if (i === this.currentCharIndex) {
+                        className = 'char current';
+                    }
+                    html += `<span class="${className}">${char}</span>`;
+                }
+                this.currentWordElement.innerHTML = html;
+                this.wordMeaningElement.textContent = this.currentWord.meaning;
+                const romajiHintElem = document.getElementById('romajiHint');
+                if (romajiHintElem) {
+                    romajiHintElem.textContent = '';
+                    romajiHintElem.style.display = 'none';
+                }
+            }
+
+            startGame() {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                this.isGameActive = true;
+                this.startTime = Date.now();
+                this.timeLeft = 60;
+                this.typingInput.disabled = false;
+                this.typingInput.focus();
+                this.startButton.style.display = 'none';
+                
+                if (this.timer) {
+                    clearInterval(this.timer);
+                }
+                
+                this.timer = setInterval(() => {
+                    const now = Date.now();
+                    const elapsed = Math.floor((now - this.startTime) / 1000);
+                    this.timeLeft = Math.max(0, 60 - elapsed);
+                    this.timeLeftElement.textContent = this.timeLeft;
+                    this.updateWPM();
+                    
+                    if (this.timeLeft <= 0) {
+                        this.endGame();
+                    }
+                }, 100);
+            }
+
+            handleKeyDown(e) {
+                if (!this.isGameActive) return;
+
+                const expectedChar = this.currentWord.word[this.currentCharIndex];
+                const inputChar = e.key.toLowerCase();
+                
+                if (inputChar === expectedChar.toLowerCase()) {
+                    this.playSound(700 + this.currentCharIndex * 80, 0.06, 'triangle', 0.35);
+                    this.currentCharIndex++;
+                    this.displayCurrentWord();
+                    
+                    if (this.currentCharIndex >= this.currentWord.word.length) {
+                        this.completeWord();
+                    }
+                } else if (inputChar.length === 1 && inputChar.match(/[a-z]/)) {
+                    e.preventDefault();
+                    this.playSound(120, 0.3, 'sawtooth', 0.4);
+                    this.showWrongKeyEffect();
+                    this.resetCombo();
+                } else if (e.key === 'Backspace') {
+                    e.preventDefault();
+                }
+            }
+
+            completeWord() {
+                this.correctCount++;
+                this.combo++;
+                this.maxCombo = Math.max(this.maxCombo, this.combo);
+                const baseScore = this.currentWord.word.length * 150;
+                const comboBonus = Math.floor(baseScore * (this.combo - 1) * 0.25);
+                const totalScore = baseScore + comboBonus;
+                this.score += totalScore;
+
+                this.showComboPopup(this.combo);
+
+                if (this.combo >= 7) {
+                    this.playAdoremarinRush();
+                    this.flashScreen('rgba(0,255,255,0.8)');
+                    this.showScorePopup(`✨${this.getRandomPraisePhrase()}✨ +${totalScore}`, '#00ffff');
+                    document.body.classList.add('fever-mode');
+                    this.showJackpotEffect();
+                    this.showKyuinEffect();
+                    this.showAdoremarinRushUI();
+                    this.timeLeft += 2;
+                    this.timeLeftElement.textContent = this.timeLeft;
+                } else if (this.combo >= 5) {
+                    this.playUltimateSound();
+                    this.flashScreen('rgba(255,23,68,0.6)');
+                    this.showScorePopup(`🔥💥ULTIMATE💥🔥 +${totalScore}`, '#ff1744');
+                    document.body.classList.add('fever-mode');
+                    this.showJackpotEffect();
+                    this.showKyuinEffect();
+                    this.timeLeft++;
+                    this.timeLeftElement.textContent = this.timeLeft;
+                } else if (this.combo >= 3) {
+                    this.playExplosiveCombo();
+                    this.flashScreen('rgba(74,222,128,0.4)');
+                    this.showScorePopup(`⚡EXPLOSIVE⚡ +${totalScore}`, '#4ade80');
+                } else {
+                    this.playSound(900 + this.combo * 150, 0.12, 'triangle', 0.35);
+                    this.showScorePopup(`+${totalScore}`, '#fbbf24');
+                }
+                this.updateComboDisplay();
+                this.updateStats();
+                setTimeout(() => {
+                    this.loadNewWord();
+                }, 250);
+            }
+
+            showWrongKeyEffect() {
+                this.typingInput.classList.add('shake');
+                this.flashScreen('rgba(255,107,107,0.3)');
+                setTimeout(() => {
+                    this.typingInput.classList.remove('shake');
+                }, 400);
+            }
+
+            resetCombo() {
+                this.combo = 0;
+                this.comboDisplay.classList.remove('show');
+                document.body.classList.remove('fever-mode');
+            }
+
+            updateComboDisplay() {
+                if (this.combo >= 2) {
+                    this.comboDisplay.textContent = `🔥 COMBO x${this.combo} 🔥`;
+                    this.comboDisplay.classList.add('show');
+                    if (this.combo >= 7) {
+                        this.comboDisplay.classList.add('ultimate');
+                        this.comboDisplay.style.background = 'linear-gradient(45deg, #ff1744, #ff6b00)';
+                    } else if (this.combo >= 5) {
+                        this.comboDisplay.classList.remove('ultimate');
+                        this.comboDisplay.style.background = 'linear-gradient(45deg, #4ade80, #22c55e)';
+                    }
+                } else {
+                    this.comboDisplay.classList.remove('show');
+                    this.comboDisplay.classList.remove('ultimate');
+                    this.comboDisplay.style.background = 'linear-gradient(45deg, #ff6b6b, #fbbf24)';
+                }
+            }
+
+            showScorePopup(text, color) {
+                this.scorePopup.textContent = text;
+                this.scorePopup.style.color = color;
+                this.scorePopup.style.animation = 'score-popup 1.2s ease-out forwards';
+                
+                setTimeout(() => {
+                    this.scorePopup.style.animation = '';
+                }, 1200);
+            }
+
+            updateStats() {
+                this.scoreElement.textContent = this.score;
+                this.correctCountElement.textContent = this.correctCount;
+            }
+
+            updateWPM() {
+                if (!this.startTime) return;
+                
+                const timeElapsed = (Date.now() - this.startTime) / 1000 / 60;
+                const wpm = Math.round(this.correctCount / timeElapsed) || 0;
+                this.wpmElement.textContent = wpm;
+            }
+
+            endGame() {
+                this.isGameActive = false;
+                clearInterval(this.timer);
+                this.typingInput.disabled = true;
+                this.startButton.style.display = 'block';
+                document.body.classList.remove('fever-mode');
+                this.showGameOver();
+            }
+
+            showGameOver() {
+                const finalWpm = parseInt(this.wpmElement.textContent);
+                
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('finalCorrectCount').textContent = this.correctCount;
+                document.getElementById('maxCombo').textContent = this.maxCombo;
+                document.getElementById('finalWpm').textContent = finalWpm + ' WPM';
+                
+                document.getElementById('gameOver').style.display = 'flex';
+                document.getElementById('playerName').value = this.playerNickname;
+            }
+
+            resetGame() {
+                this.isGameActive = false;
+                clearInterval(this.timer);
+                
+                this.score = 0;
+                this.correctCount = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.currentCharIndex = 0;
+                this.startTime = null;
+                this.timeLeft = 60;
+
+                this.typingInput.value = '';
+                this.typingInput.disabled = true;
+                this.startButton.style.display = 'block';
+                
+                this.scoreElement.textContent = '0';
+                this.wpmElement.textContent = '0';
+                this.correctCountElement.textContent = '0';
+                this.timeLeftElement.textContent = '60';
+                
+                this.comboDisplay.classList.remove('show');
+                document.body.classList.remove('fever-mode');
+                
+                this.loadNewWord();
+            }
+
+            showJackpotEffect() {
+                this.jackpotEffect.style.animation = 'none';
+                this.jackpotEffect.offsetHeight; // リフロー
+                this.jackpotEffect.style.animation = 'jackpot-flash 0.5s ease-out';
+            }
+
+            createKyuinLines() {
+                for (let i = 0; i < 10; i++) {
+                    const line = document.createElement('div');
+                    line.className = 'kyuin-line';
+                    line.style.top = `${i * 10}%`;
+                    line.style.animationDelay = `${i * 0.1}s`;
+                    this.kyuinEffect.appendChild(line);
+                    this.kyuinLines.push(line);
+                }
+            }
+
+            showKyuinEffect() {
+                this.kyuinLines.forEach(line => {
+                    line.style.animation = 'none';
+                    line.offsetHeight;
+                    line.style.animation = 'kyuin-move 0.3s linear infinite';
+                });
+            }
+
+            playAdoremarinRush() {
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => {
+                        this.playSound(200 + i * 100, 0.08, 'square', 0.5);
+                        this.playSound(800 + i * 80, 0.08, 'triangle', 0.4);
+                    }, i * 40);
+                }
+                setTimeout(() => {
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            this.playSound(1500 + i * 200, 0.15, 'sawtooth', 0.5);
+                        }, i * 60);
+                    }
+                }, 400);
+                setTimeout(() => {
+                    this.playSound(2000, 0.5, 'triangle', 0.7);
+                }, 700);
+            }
+
+            showAdoremarinRushUI() {
+                let rushDiv = document.createElement('div');
+                rushDiv.id = 'adoremarinRush';
+                rushDiv.innerText = this.getRandomPraisePhrase();
+                rushDiv.style.position = 'fixed';
+                rushDiv.style.top = '20%';
+                rushDiv.style.left = '50%';
+                rushDiv.style.transform = 'translate(-50%, -50%)';
+                rushDiv.style.fontSize = '5rem';
+                rushDiv.style.fontWeight = 'bold';
+                rushDiv.style.color = '#00ffff';
+                rushDiv.style.textShadow = '0 0 40px #fff, 0 0 80px #00ffff, 0 0 120px #00ffff, 0 0 160px #00ffff';
+                rushDiv.style.background = 'linear-gradient(45deg, #00ffff, #ff00ff)';
+                rushDiv.style.webkitBackgroundClip = 'text';
+                rushDiv.style.webkitTextFillColor = 'transparent';
+                rushDiv.style.animation = 'adoremarin-rush-anim 1.5s ease-out forwards, text-glow 1.5s ease-in-out infinite';
+                rushDiv.style.zIndex = '3000';
+                rushDiv.style.pointerEvents = 'none';
+                document.body.appendChild(rushDiv);
+                setTimeout(() => {
+                    if (rushDiv.parentNode) rushDiv.parentNode.removeChild(rushDiv);
+                }, 1700);
+            }
+
+            getRandomPraisePhrase() {
+                const randomIndex = Math.floor(Math.random() * this.praisePhrases.length);
+                return this.praisePhrases[randomIndex];
+            }
+
+            showComboPopup(combo) {
+                let comboDiv = document.createElement('div');
+                comboDiv.className = 'combo-popup';
+                comboDiv.innerText = `${combo} combo!`;
+                comboDiv.style.position = 'fixed';
+                comboDiv.style.top = '10%';
+                comboDiv.style.left = '50%';
+                comboDiv.style.transform = 'translate(-50%, 0)';
+                comboDiv.style.fontSize = '2.5rem';
+                comboDiv.style.fontWeight = 'bold';
+                comboDiv.style.color = '#fbbf24';
+                comboDiv.style.textShadow = '0 0 20px #fff, 0 0 40px #fbbf24';
+                comboDiv.style.zIndex = '3000';
+                comboDiv.style.pointerEvents = 'none';
+                comboDiv.style.animation = 'combo-popup-anim 1s ease-out forwards';
+                document.body.appendChild(comboDiv);
+                setTimeout(() => {
+                    if (comboDiv.parentNode) comboDiv.parentNode.removeChild(comboDiv);
+                }, 1000);
+            }
+        }
+
+        // ゲームの初期化
+        const rankingManager = new RankingManager();
+        const game = new TypingGame();
+
+        // ニックネーム送信ボタンのイベントリスナー
+        document.getElementById('nicknameSubmit').addEventListener('click', async () => {
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            if (nickname) {
+                await game.setNickname(nickname);
+            }
+        });
+
+        // ニックネーム入力欄のEnterキーイベント
+        document.getElementById('nicknameInput').addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const nickname = document.getElementById('nicknameInput').value.trim();
+                if (nickname) {
+                    await game.setNickname(nickname);
+                }
+            }
+        });
+
+        // スコアを保存してゲームを終了する関数
+        async function saveScoreAndClose() {
+            const finalScore = parseInt(document.getElementById('finalScore').textContent);
+            const finalWpm = parseInt(document.getElementById('finalWpm').textContent);
+            const correctCount = parseInt(document.getElementById('finalCorrectCount').textContent);
+            const maxCombo = parseInt(document.getElementById('maxCombo').textContent);
+
+            await rankingManager.addScore(
+                game.playerNickname,
+                finalScore,
+                finalWpm,
+                correctCount,
+                maxCombo
+            );
+            closeGameOver();
+        }
+
+        // ゲームオーバー画面を閉じる関数
+        function closeGameOver() {
+            document.getElementById('gameOver').style.display = 'none';
+            game.resetGame();
+        }
+    </script>
+</body>
+</html>
+                
