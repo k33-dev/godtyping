@@ -806,7 +806,9 @@
             async loadRankings() {
                 try {
                     const snapshot = await database.ref('rankings').once('value');
-                    this.rankings = snapshot.val() || [];
+                    const data = snapshot.val() || {};
+                    // Firebaseは配列ではなくオブジェクトで返すので、配列に変換
+                    this.rankings = Object.values(data).sort((a, b) => b.score - a.score);
                     this.displayRankings();
                 } catch (error) {
                     console.error('ランキングの読み込みに失敗しました:', error);
