@@ -727,6 +727,25 @@
             margin: 8px 0 8px 0;
             opacity: 0.5;
         }
+        .nickname-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            color: #222;
+            font-weight: bold;
+            border-radius: 20px;
+            padding: 6px 16px;
+            margin-left: 10px;
+            box-shadow: 0 2px 8px rgba(251,191,36,0.15);
+            font-size: 1.1rem;
+            gap: 8px;
+        }
+        .nickname-icon {
+            font-size: 1.2em;
+        }
+        .nickname-label {
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -773,6 +792,10 @@
 
         <div class="controls">
             <button class="btn secondary" id="resetBtn">RESET</button>
+            <div id="nicknameBadge" class="nickname-badge" style="display:inline-flex;align-items:center;background:linear-gradient(45deg,#fbbf24,#f59e0b);color:#222;font-weight:bold;border-radius:20px;padding:6px 16px;margin-left:10px;box-shadow:0 2px 8px rgba(251,191,36,0.15);font-size:1.1rem;gap:8px;">
+                <span class="nickname-icon" style="font-size:1.2em;">👤</span>
+                <span class="nickname-label" id="nicknameLabel"></span>
+            </div>
         </div>
 
         <div class="score-popup" id="scorePopup"></div>
@@ -1077,7 +1100,35 @@
                     { word: "fax", meaning: "ファックス" },
                     { word: "mail", meaning: "郵便・メール" },
                     { word: "message", meaning: "メッセージ" },
-                    { word: "call", meaning: "電話する" }
+                    { word: "call", meaning: "電話する" },
+                    { word: "accommodate", meaning: "収容する、適応させる" },
+                    { word: "acknowledge", meaning: "認める" },
+                    { word: "allocate", meaning: "割り当てる" },
+                    { word: "anticipate", meaning: "予期する" },
+                    { word: "appreciate", meaning: "感謝する、正しく評価する" },
+                    { word: "collaborate", meaning: "協力する" },
+                    { word: "comprehensive", meaning: "包括的な" },
+                    { word: "consolidate", meaning: "統合する" },
+                    { word: "contribute", meaning: "貢献する" },
+                    { word: "convention", meaning: "大会、慣習" },
+                    { word: "deficiency", meaning: "不足、欠乏" },
+                    { word: "delegate", meaning: "代表者、委任する" },
+                    { word: "deteriorate", meaning: "悪化する" },
+                    { word: "distinguish", meaning: "区別する" },
+                    { word: "fluctuate", meaning: "変動する" },
+                    { word: "implement", meaning: "実行する" },
+                    { word: "incentive", meaning: "動機、奨励" },
+                    { word: "indispensable", meaning: "不可欠な" },
+                    { word: "negotiate", meaning: "交渉する" },
+                    { word: "prosperity", meaning: "繁栄" },
+                    { word: "substantial", meaning: "かなりの" },
+                    { word: "substitute", meaning: "代用する" },
+                    { word: "subsequent", meaning: "その後の" },
+                    { word: "sufficient", meaning: "十分な" },
+                    { word: "suspend", meaning: "一時停止する" },
+                    { word: "transmit", meaning: "送信する" },
+                    { word: "utilize", meaning: "活用する" },
+                    { word: "withdraw", meaning: "引き出す、撤回する" }
                 ];
                 this.longWords = [
                     { word: "adventure", meaning: "冒険" },
@@ -1126,10 +1177,14 @@
                     "SENSATIONAL!!"
                 ];
 
+                this.remainingWords = [];
+                this.lastWord = null;
+
                 this.initElements();
                 this.initEventListeners();
                 this.initAudio();
                 this.createParticles();
+                this.resetWordPool();
                 this.loadNewWord();
                 this.checkNickname();
             }
@@ -1395,13 +1450,31 @@
                 }, 200);
             }
 
-            loadNewWord() {
+            resetWordPool() {
                 let wordList = this.words;
                 if (this.combo >= 7) {
                     wordList = this.longWords;
                 }
-                const randomIndex = Math.floor(Math.random() * wordList.length);
-                this.currentWord = wordList[randomIndex];
+                this.remainingWords = this.shuffleWords(wordList);
+            }
+
+            loadNewWord() {
+                // 残り単語がなければリセット
+                if (!this.remainingWords || this.remainingWords.length === 0) {
+                    this.resetWordPool();
+                }
+                // 直前と同じ単語を避ける
+                let nextWord = null;
+                let tryCount = 0;
+                do {
+                    if (this.remainingWords.length === 0) {
+                        this.resetWordPool();
+                    }
+                    nextWord = this.remainingWords.pop();
+                    tryCount++;
+                } while (nextWord && this.lastWord && nextWord.word === this.lastWord.word && tryCount < 10);
+                this.currentWord = nextWord;
+                this.lastWord = nextWord;
                 this.currentCharIndex = 0;
                 this.displayCurrentWord();
             }
@@ -1520,6 +1593,7 @@
                 this.comboDisplay.classList.remove('show');
                 document.body.classList.remove('fever-mode');
                 
+                this.resetWordPool();
                 this.loadNewWord();
             }
 
@@ -1624,6 +1698,15 @@
                 const wpm = Math.round(this.correctCount / timeElapsed) || 0;
                 this.wpmElement.textContent = wpm;
             }
+
+            shuffleWords(wordList) {
+                const arr = wordList.slice();
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
         }
 
         // ゲームの初期化
@@ -1674,13 +1757,16 @@
 
         // ニックネーム表示を更新する関数
         function updateNicknameDisplay(nickname) {
-            const elem = document.getElementById('nicknameDisplay');
-            if (nickname) {
-                elem.textContent = `あなたのニックネーム：${nickname}`;
-                elem.style.display = 'block';
-            } else {
-                elem.textContent = '';
-                elem.style.display = 'none';
+            const badge = document.getElementById('nicknameBadge');
+            const label = document.getElementById('nicknameLabel');
+            if (badge && label) {
+                if (nickname) {
+                    label.textContent = nickname;
+                    badge.style.display = 'inline-flex';
+                } else {
+                    label.textContent = '';
+                    badge.style.display = 'none';
+                }
             }
         }
 
