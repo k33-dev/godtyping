@@ -1548,26 +1548,34 @@
                 document.getElementById('gameOver').style.display = 'flex';
                 document.getElementById('playerName').value = this.playerNickname;
 
-                // 追加：今回スコアの順位を計算して表示
-                let filteredRankings = rankingManager.getFilteredRankings();
-                const bestByName = {};
-                filteredRankings.forEach(r => {
-                    if (!bestByName[r.name] || bestByName[r.name].score < r.score) {
-                        bestByName[r.name] = r;
-                    }
+                // 全ランキング取得
+                let allRankings = rankingManager.getFilteredRankings().slice();
+
+                // 今回のスコアを一時的に追加
+                allRankings.push({
+                    name: this.playerNickname,
+                    score: this.score,
+                    wpm: finalWpm,
+                    correctCount: this.correctCount,
+                    maxCombo: this.maxCombo,
+                    date: new Date().toLocaleDateString(),
+                    timestamp: new Date().getTime()
                 });
-                filteredRankings = Object.values(bestByName).sort((a, b) => b.score - a.score);
-                const myIndex = filteredRankings.findIndex(r => r.name === this.playerNickname && r.score === this.score);
+
+                // スコア順にソート
+                allRankings.sort((a, b) => b.score - a.score);
+
+                // 今回のスコアの順位を探す（同一スコア・同一ニックネーム）
+                let myRank = allRankings.findIndex(r =>
+                    r.name === this.playerNickname &&
+                    r.score === this.score
+                ) + 1;
+
                 let rankText = '';
-                if (myIndex >= 0) {
-                    rankText = `あなたの今回の順位：${myIndex + 1}位（スコア：${this.score}）`;
+                if (myRank > 0) {
+                    rankText = `あなたの今回の順位：${myRank}位（スコア：${this.score}）`;
                 } else {
-                    const bestIndex = filteredRankings.findIndex(r => r.name === this.playerNickname);
-                    if (bestIndex >= 0) {
-                        rankText = `あなたの最高順位：${bestIndex + 1}位（スコア：${filteredRankings[bestIndex].score}）`;
-                    } else {
-                        rankText = '今回のスコアはランキング外です';
-                    }
+                    rankText = '今回のスコアはランキング外です';
                 }
                 document.getElementById('currentRankInfo').textContent = rankText;
             }
