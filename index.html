@@ -742,6 +742,7 @@
     </div>
 
     <div class="game-container">
+        <div id="nicknameDisplay" style="text-align:center;font-size:1.2rem;color:#fbbf24;font-weight:bold;margin-bottom:5px;"></div>
         <h1 class="title">🔥Typing God🔥</h1>
         <button class="btn start" id="startButton">Press ENTER to start the game!</button>
         
@@ -1153,6 +1154,10 @@
                     this.playerNickname = nickname;
                     localStorage.setItem('playerNickname', nickname);
                     document.getElementById('nicknameModal').style.display = 'none';
+                    // ニックネーム表示を更新
+                    updateNicknameDisplay(nickname);
+                    // 初回登録直後でもEnterで開始できるようにする
+                    this.isGameActive = false;
                 } catch (error) {
                     console.error('ニックネームの設定に失敗しました:', error);
                     alert('ニックネームの設定に失敗しました。もう一度お試しください。');
@@ -1666,6 +1671,21 @@
             document.getElementById('gameOver').style.display = 'none';
             game.resetGame();
         }
+
+        // ニックネーム表示を更新する関数
+        function updateNicknameDisplay(nickname) {
+            const elem = document.getElementById('nicknameDisplay');
+            if (nickname) {
+                elem.textContent = `あなたのニックネーム：${nickname}`;
+                elem.style.display = 'block';
+            } else {
+                elem.textContent = '';
+                elem.style.display = 'none';
+            }
+        }
+
+        // ページロード時にニックネーム表示を反映
+        updateNicknameDisplay(localStorage.getItem('playerNickname') || '');
     </script>
 </body>
 </html>
