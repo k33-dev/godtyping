@@ -261,6 +261,14 @@
             background: linear-gradient(45deg, #74b9ff, #0984e3); 
             box-shadow: 0 5px 15px rgba(116,185,255,0.3);
         }
+        .btn.flash-toggle {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            box-shadow: 0 5px 15px rgba(251,191,36,0.3);
+        }
+        .btn.flash-toggle.active {
+            background: linear-gradient(45deg, #4ade80, #22c55e);
+            box-shadow: 0 5px 15px rgba(74,222,128,0.3);
+        }
         .btn.start { 
             background: linear-gradient(45deg, #4ade80, #22c55e); 
             box-shadow: 0 5px 15px rgba(74,222,128,0.3);
@@ -801,6 +809,7 @@
 
         <div class="controls">
             <button class="btn secondary" id="resetBtn">RESET</button>
+            <button class="btn flash-toggle" id="flashToggleBtn">FLASH ON</button>
             <div id="nicknameBadge" class="nickname-badge" style="display:inline-flex;align-items:center;background:linear-gradient(45deg,#fbbf24,#f59e0b);color:#222;font-weight:bold;border-radius:20px;padding:6px 16px;margin-left:10px;box-shadow:0 2px 8px rgba(251,191,36,0.15);font-size:1.1rem;gap:8px;">
                 <span class="nickname-icon" style="font-size:1.2em;">👤</span>
                 <span class="nickname-label" id="nicknameLabel"></span>
@@ -1188,6 +1197,7 @@
 
                 this.remainingWords = [];
                 this.lastWord = null;
+                this.isFlashEnabled = true;  // フラッシュ効果の初期状態
 
                 this.initElements();
                 this.initEventListeners();
@@ -1237,6 +1247,7 @@
                 this.timeLeftElement = document.getElementById('timeLeft');
                 this.startButton = document.getElementById('startButton');
                 this.resetBtn = document.getElementById('resetBtn');
+                this.flashToggleBtn = document.getElementById('flashToggleBtn');
                 this.scorePopup = document.getElementById('scorePopup');
                 this.comboDisplay = document.getElementById('comboDisplay');
                 this.screenFlash = document.getElementById('screenFlash');
@@ -1245,6 +1256,7 @@
             initEventListeners() {
                 this.startButton.addEventListener('click', () => this.startGame());
                 this.resetBtn.addEventListener('click', () => this.resetGame());
+                this.flashToggleBtn.addEventListener('click', () => this.toggleFlash());
                 document.addEventListener('keydown', (e) => this.handleKeyDown(e));
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !this.isGameActive) {
@@ -1297,28 +1309,61 @@
 
                 this.showComboPopup(this.combo);
 
+                // 正解時の一瞬のフラッシュ（フラッシュモードがオンの場合のみ）
+                if (this.isFlashEnabled) {
+                    this.flashScreen('rgba(255,255,255,0.2)', 100);
+                }
+
                 if (this.combo >= 7) {
                     this.playAdoremarinRush();
-                    this.flashScreen('rgba(0,255,255,0.8)');
                     this.showScorePopup(`✨${this.getRandomPraisePhrase()}✨ +${totalScore}`, '#00ffff');
-                    document.body.classList.add('fever-mode');
-                    this.showJackpotEffect();
-                    this.showKyuinEffect();
-                    this.showAdoremarinRushUI();
+                    if (this.isFlashEnabled) {
+                        document.body.classList.add('fever-mode');
+                        this.showJackpotEffect();
+                        this.showKyuinEffect();
+                        this.showAdoremarinRushUI();
+                    } else {
+                        // FLASH OFF時は一瞬だけ超派手に
+                        this.flashScreen('rgba(255,255,0,0.7)', 220); // 強い黄色フラッシュ
+                        document.body.classList.add('fever-mode');
+                        this.showJackpotEffect();
+                        this.showKyuinEffect();
+                        this.showAdoremarinRushUI();
+                        this.comboDisplay.style.transform = 'scale(1.5)';
+                        this.comboDisplay.style.filter = 'drop-shadow(0 0 30px #fff700) drop-shadow(0 0 60px #00ffff)';
+                        setTimeout(() => {
+                            document.body.classList.remove('fever-mode');
+                            this.comboDisplay.style.transform = '';
+                            this.comboDisplay.style.filter = '';
+                        }, 220);
+                    }
                     this.timeLeft += 2;
                     this.timeLeftElement.textContent = this.timeLeft;
                 } else if (this.combo >= 5) {
                     this.playUltimateSound();
-                    this.flashScreen('rgba(255,23,68,0.6)');
                     this.showScorePopup(`🔥💥ULTIMATE💥🔥 +${totalScore}`, '#ff1744');
-                    document.body.classList.add('fever-mode');
-                    this.showJackpotEffect();
-                    this.showKyuinEffect();
+                    if (this.isFlashEnabled) {
+                        document.body.classList.add('fever-mode');
+                        this.showJackpotEffect();
+                        this.showKyuinEffect();
+                    } else {
+                        // FLASH OFF時は一瞬だけ派手に
+                        this.flashScreen('rgba(255,80,0,0.6)', 180); // 強いオレンジフラッシュ
+                        document.body.classList.add('fever-mode');
+                        this.showJackpotEffect();
+                        this.showKyuinEffect();
+                        this.comboDisplay.style.transform = 'scale(1.3)';
+                        this.comboDisplay.style.filter = 'drop-shadow(0 0 20px #ff6b00) drop-shadow(0 0 40px #fff)';
+                        setTimeout(() => {
+                            document.body.classList.remove('fever-mode');
+                            this.comboDisplay.style.transform = '';
+                            this.comboDisplay.style.filter = '';
+                        }, 180);
+                    }
                     this.timeLeft++;
                     this.timeLeftElement.textContent = this.timeLeft;
                 } else if (this.combo >= 3) {
                     this.playExplosiveCombo();
-                    this.flashScreen('rgba(74,222,128,0.4)');
                     this.showScorePopup(`⚡EXPLOSIVE⚡ +${totalScore}`, '#4ade80');
                 } else {
                     this.playSound(900 + this.combo * 150, 0.12, 'triangle', 0.35);
@@ -1451,12 +1496,13 @@
                 }
             }
 
-            flashScreen(color = 'rgba(255,255,255,0.4)') {
+            flashScreen(color = 'rgba(255,255,255,0.4)', duration = 200) {
+                if (!this.isFlashEnabled) return;
                 this.screenFlash.style.background = color;
                 this.screenFlash.classList.add('flash-effect');
                 setTimeout(() => {
                     this.screenFlash.classList.remove('flash-effect');
-                }, 200);
+                }, duration);
             }
 
             resetWordPool() {
@@ -1723,6 +1769,19 @@
                     [arr[i], arr[j]] = [arr[j], arr[i]];
                 }
                 return arr;
+            }
+
+            toggleFlash() {
+                this.isFlashEnabled = !this.isFlashEnabled;
+                this.flashToggleBtn.textContent = this.isFlashEnabled ? 'FLASH ON' : 'FLASH OFF';
+                this.flashToggleBtn.classList.toggle('active');
+                // フラッシュモードを切り替えた時に、現在のフラッシュ効果やピカピカ演出をクリア
+                this.screenFlash.classList.remove('flash-effect');
+                if (!this.isFlashEnabled) {
+                    document.body.classList.remove('fever-mode');
+                    this.comboDisplay.classList.remove('ultimate');
+                    this.comboDisplay.style.background = 'linear-gradient(45deg, #ff6b6b, #fbbf24)';
+                }
             }
         }
 
