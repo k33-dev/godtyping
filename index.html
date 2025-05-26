@@ -918,6 +918,15 @@
 
             async addScore(name, score, wpm, correctCount, maxCombo) {
                 try {
+                    // 既存の同名スコアを全て取得
+                    const snapshot = await database.ref('rankings').orderByChild('name').equalTo(name).once('value');
+                    const data = snapshot.val() || {};
+                    // 既存の同名スコアを全て削除
+                    for (const key in data) {
+                        await database.ref('rankings').child(key).remove();
+                    }
+
+                    // 新しいスコアを追加
                     const newScore = {
                         name: name,
                         score: score,
@@ -927,15 +936,10 @@
                         date: new Date().toLocaleDateString(),
                         timestamp: new Date().getTime()
                     };
-
-                    // スコアを追加
                     const scoreRef = database.ref('rankings').push();
                     await scoreRef.set(newScore);
 
-                    // ニックネームを保存
                     await database.ref('nicknames').child(name).set(true);
-
-                    // ランキングを更新
                     await this.loadRankings();
                 } catch (error) {
                     console.error('スコアの保存に失敗しました:', error);
@@ -1602,11 +1606,18 @@
                 document.getElementById('gameOver').style.display = 'flex';
                 document.getElementById('playerName').value = this.playerNickname;
 
-                // 全ランキング取得
-                let allRankings = rankingManager.getFilteredRankings().slice();
+                // ひとり一枠処理後のランキングで順位を計算
+                let filteredRankings = rankingManager.getFilteredRankings();
+                const bestByName = {};
+                filteredRankings.forEach(r => {
+                    if (!bestByName[r.name] || bestByName[r.name].score < r.score) {
+                        bestByName[r.name] = r;
+                    }
+                });
+                filteredRankings = Object.values(bestByName).sort((a, b) => b.score - a.score);
 
                 // 今回のスコアを一時的に追加
-                allRankings.push({
+                filteredRankings.push({
                     name: this.playerNickname,
                     score: this.score,
                     wpm: finalWpm,
@@ -1616,11 +1627,11 @@
                     timestamp: new Date().getTime()
                 });
 
-                // スコア順にソート
-                allRankings.sort((a, b) => b.score - a.score);
+                // 再ソート
+                filteredRankings.sort((a, b) => b.score - a.score);
 
-                // 今回のスコアの順位を探す（同一スコア・同一ニックネーム）
-                let myRank = allRankings.findIndex(r =>
+                // 今回のスコアの順位を探す
+                let myRank = filteredRankings.findIndex(r =>
                     r.name === this.playerNickname &&
                     r.score === this.score
                 ) + 1;
@@ -1809,18 +1820,26 @@
 
         // スコアを保存してゲームを終了する関数
         async function saveScoreAndClose() {
+            // ゲームオーバー画面の名前欄の値を取得
+            const playerName = document.getElementById('playerName').value.trim() || game.playerNickname;
+            game.playerNickname = playerName;
+            localStorage.setItem('playerNickname', playerName);
+
             const finalScore = parseInt(document.getElementById('finalScore').textContent);
             const finalWpm = parseInt(document.getElementById('finalWpm').textContent);
             const correctCount = parseInt(document.getElementById('finalCorrectCount').textContent);
             const maxCombo = parseInt(document.getElementById('maxCombo').textContent);
 
             await rankingManager.addScore(
-                game.playerNickname,
+                playerName,
                 finalScore,
                 finalWpm,
                 correctCount,
                 maxCombo
             );
+
+            // スコア保存後にランキングを即時再表示
+            await rankingManager.loadRankings();
 
             closeGameOver();
         }
