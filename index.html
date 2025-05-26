@@ -974,7 +974,7 @@
                     myBest = filteredRankings.filter(r => r.name === nickname)[0];
                 }
                 if (myBest) {
-                    const myIndex = filteredRankings.findIndex(r => r.name === nickname);
+                    const myIndex = filteredRankings.findIndex(r => r.name === nickname && r.score === myBest.score);
                     const myRank = myIndex >= 0 ? `#${myIndex + 1}` : '#?';
                     myBestScoreDiv.className = 'my-best-score ranking-item';
                     myBestScoreDiv.innerHTML = `
