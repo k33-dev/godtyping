@@ -957,10 +957,12 @@
                     // 既存の同名スコアを全て取得
                     const snapshot = await database.ref('rankings').orderByChild('name').equalTo(name).once('value');
                     const data = snapshot.val() || {};
-                    // 既存の同名スコアを全て削除
+                    // 既存の同名スコアを全て削除（Promise.allで完全に削除を待つ）
+                    const removePromises = [];
                     for (const key in data) {
-                        await database.ref('rankings').child(key).remove();
+                        removePromises.push(database.ref('rankings').child(key).remove());
                     }
+                    await Promise.all(removePromises);
 
                     // 新しいスコアを追加
                     const newScore = {
@@ -976,6 +978,7 @@
                     await scoreRef.set(newScore);
 
                     await database.ref('nicknames').child(name).set(true);
+                    // スコア追加後にランキングを再取得
                     await this.loadRankings();
                 } catch (error) {
                     console.error('スコアの保存に失敗しました:', error);
