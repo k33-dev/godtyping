@@ -1311,7 +1311,8 @@
                     if (e.key === 'Enter') {
                         const gameOverElem = document.getElementById('gameOver');
                         if (gameOverElem && gameOverElem.style.display === 'flex') {
-                            closeGameOver();
+                            // Enterでゲームオーバー画面を閉じる時もランキングを更新
+                            saveScoreAndClose();
                         }
                     }
                 });
