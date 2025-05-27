@@ -763,6 +763,39 @@
         .nickname-label {
             font-size: 1rem;
         }
+        .x-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            margin-right: 10px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 28px;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            transition: all 0.18s cubic-bezier(.4,1.3,.6,1);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            outline: none;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .x-btn:hover, .x-btn:focus {
+            background: rgba(255,255,255,0.22);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            transform: scale(1.12);
+        }
+        .x-btn:active {
+            background: rgba(255,255,255,0.32);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            transform: scale(0.97);
+        }
+        .x-btn img {
+            width: 32px;
+            height: 32px;
+            filter: brightness(0) invert(1);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -808,6 +841,9 @@
         </div>
 
         <div class="controls">
+            <a href="https://x.com/toe78560468" target="_blank" class="x-btn" style="display:flex;align-items:center;justify-content:center;width:56px;height:56px;margin-right:10px;background:rgba(255,255,255,0.12);border-radius:28px;border:1.5px solid rgba(255,255,255,0.25);transition:all 0.18s cubic-bezier(.4,1.3,.6,1);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.10);outline:none;touch-action:manipulation;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.png" alt="X" style="width:32px;height:32px;filter:brightness(0) invert(1);pointer-events:none;" />
+            </a>
             <button class="btn secondary" id="resetBtn">RESET</button>
             <button class="btn flash-toggle" id="flashToggleBtn">FLASH ON</button>
             <div id="nicknameBadge" class="nickname-badge" style="display:inline-flex;align-items:center;background:linear-gradient(45deg,#fbbf24,#f59e0b);color:#222;font-weight:bold;border-radius:20px;padding:6px 16px;margin-left:10px;box-shadow:0 2px 8px rgba(251,191,36,0.15);font-size:1.1rem;gap:8px;">
